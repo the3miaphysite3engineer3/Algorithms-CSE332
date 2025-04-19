@@ -53,7 +53,7 @@ function choose_color(cells):
 ```python
 from tromino_tiling import TrominoTiler
 
-tiler = TrominoTiler(n=3, missing=(2, 3))
+tiler = TrominoTiler(n=5, missing=(2, 3))
 tiler.tile()
 tiler.plot()
 ```
@@ -69,3 +69,7 @@ T(N) = 4T(N/2) + O(1)
 where N is the side length of the board. Solving this recurrence gives T(N) = O(N^2), which matches the total number of cells on the board. Thus, the time complexity is O(N^2), where N = 2^n.
 
 Space complexity is also O(N^2), as the algorithm stores the board and the list of placed trominoes. The recursion stack depth is O(log N), but this is dominated by the board storage.
+
+Result:
+![Capture2](https://github.com/the3miaphysite3engineer3/Algorithms-CSE332/raw/main/Task%201/Capture2.PNG)
+
