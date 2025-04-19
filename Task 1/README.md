@@ -31,7 +31,6 @@ function choose_color(cells):
     Find colors of adjacent trominoes
     Return a color not used by neighbors
 ```
-# Tromino Tiling Algorithm Report
 ## Code Structure
 ### TrominoTiler Class
 - **Initialization**: Sets up the board, missing square, and data structures for tracking trominoes and their colors.
