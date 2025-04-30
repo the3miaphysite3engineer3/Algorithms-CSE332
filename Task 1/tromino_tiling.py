@@ -433,7 +433,46 @@ def run_all_algorithms(n, missing_x=None, missing_y=None):
     plt.show()
 
 
-# Run the demonstration with a 4x4 board (n=2)
+# Function to compare algorithm performance with different board sizes
+def compare_algorithm_performance(max_n=3):
+    """Compare the performance of all algorithms with different board sizes."""
+    print("\nComparing Algorithm Performance:")
+    print("-" * 50)
+    print(f"{'Board Size':<15}{'Divide and Conquer':<25}{'Graph Coloring':<25}{'SAT Solver':<25}")
+    print("-" * 50)
+    
+    for n in range(1, max_n + 1):
+        # Use consistent missing square position for fair comparison
+        missing_x, missing_y = 0, 0
+        
+        # Store execution times
+        times = []
+        
+        # Run each algorithm and measure time
+        for _, AlgoClass in [("Divide and Conquer", DivideAndConquerAlgorithm),
+                             ("Graph Coloring", GraphColoringAlgorithm),
+                             ("SAT Solver Approach", SATSolverAlgorithm)]:
+            # Initialize algorithm
+            algo = AlgoClass(n, missing_x, missing_y)
+            
+            # Measure execution time
+            start_time = time.time()
+            algo.run()
+            end_time = time.time()
+            
+            # Store execution time
+            times.append(end_time - start_time)
+        
+        # Print results for this board size
+        board_size = f"{2**n}x{2**n}"
+        print(f"{board_size:<15}{times[0]:<25.6f}{times[1]:<25.6f}{times[2]:<25.6f}")
+    
+    print("-" * 50)
+
+# Run the demonstration
 if __name__ == "__main__":
-    # You can adjust these parameters as needed
+    # Run visual demonstration with a specific board size
     run_all_algorithms(n=3, missing_x=2, missing_y=3)  # Creates a 2^3 = 8x8 board
+    
+    # Compare performance of algorithms with different board sizes
+    compare_algorithm_performance(max_n=3)  # Compare up to 2^3 = 8x8 boards
