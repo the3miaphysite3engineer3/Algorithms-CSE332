@@ -137,39 +137,103 @@ class DivideAndConquerAlgorithm:
         # Create a graph where nodes are tromino IDs and edges are adjacency relationships
         adjacency = defaultdict(set)
         
-        # Find adjacencies
+        # Find all tromino positions for better adjacency detection
+        tromino_positions = defaultdict(list)
         for i in range(self.board.size):
-            for j in range(self.board.size - 1):
-                id1 = self.board.board[i, j]
-                id2 = self.board.board[i, j+1]
-                if id1 > 0 and id2 > 0 and id1 != id2:
-                    adjacency[id1].add(id2)
-                    adjacency[id2].add(id1)
-        
-        for i in range(self.board.size - 1):
             for j in range(self.board.size):
-                id1 = self.board.board[i, j]
-                id2 = self.board.board[i+1, j]
-                if id1 > 0 and id2 > 0 and id1 != id2:
-                    adjacency[id1].add(id2)
-                    adjacency[id2].add(id1)
+                tromino_id = self.board.board[i, j]
+                if tromino_id > 0:
+                    tromino_positions[tromino_id].append((i, j))
         
-        # Assign colors using greedy algorithm
+        # Check all possible adjacencies between trominoes
+        # Two trominoes are adjacent if any of their cells are adjacent
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Right, Down, Left, Up
+        
+        for tromino_id, positions in tromino_positions.items():
+            for i, j in positions:
+                for di, dj in directions:
+                    ni, nj = i + di, j + dj
+                    if 0 <= ni < self.board.size and 0 <= nj < self.board.size:
+                        neighbor_id = self.board.board[ni, nj]
+                        if neighbor_id > 0 and neighbor_id != tromino_id:
+                            adjacency[tromino_id].add(neighbor_id)
+        
+        # Use Welsh-Powell algorithm for graph coloring
+        # Sort tromino IDs by degree (number of neighbors) for better coloring
+        tromino_ids = sorted(range(1, self.board.tromino_count + 1), 
+                            key=lambda tid: len(adjacency[tid]), reverse=True)
+        
         colors = {}
-        for tromino_id in range(1, self.board.tromino_count + 1):
+        for tromino_id in tromino_ids:
+            # Get colors used by adjacent trominoes
             used_colors = {colors.get(adj) for adj in adjacency[tromino_id] if adj in colors}
             
             # Find the first available color
-            for color in range(1, 4):  # We only need 3 colors
+            for color in range(1, 4):  # We only need 3 colors for planar graphs
                 if color not in used_colors:
                     colors[tromino_id] = color
                     break
+            
+            # If no color is available (shouldn't happen with 3 colors for planar graphs)
+            if tromino_id not in colors:
+                # Find color with minimum conflicts
+                conflicts = [0, 0, 0]
+                for color in range(1, 4):
+                    for adj in adjacency[tromino_id]:
+                        if adj in colors and colors[adj] == color:
+                            conflicts[color-1] += 1
+                colors[tromino_id] = conflicts.index(min(conflicts)) + 1
+        
+        # Verify coloring - ensure no adjacent trominoes have the same color
+        valid_coloring = True
+        for tromino_id, neighbors in adjacency.items():
+            for neighbor in neighbors:
+                if colors.get(tromino_id) == colors.get(neighbor):
+                    valid_coloring = False
+        
+        if not valid_coloring:
+            # If coloring is invalid, try a more aggressive approach with backtracking
+            self._backtracking_coloring(adjacency)
+        else:
+            # Apply the valid coloring to the board
+            for i in range(self.board.size):
+                for j in range(self.board.size):
+                    if self.board.board[i, j] > 0:
+                        tromino_id = int(self.board.board[i, j])
+                        self.board.color_board[i, j] = colors.get(tromino_id, 1)
+    
+    def _backtracking_coloring(self, adjacency):
+        """Use backtracking to find a valid 3-coloring for the tromino graph."""
+        colors = {}
+        
+        def is_valid_color(tromino_id, color):
+            for neighbor in adjacency[tromino_id]:
+                if neighbor in colors and colors[neighbor] == color:
+                    return False
+            return True
+        
+        def backtrack(tromino_id):
+            if tromino_id > self.board.tromino_count:
+                return True
+            
+            for color in range(1, 4):  # Try each color (1, 2, 3)
+                if is_valid_color(tromino_id, color):
+                    colors[tromino_id] = color
+                    if backtrack(tromino_id + 1):
+                        return True
+                    del colors[tromino_id]  # Backtrack
+            
+            return False
+        
+        # Start backtracking from tromino_id 1
+        backtrack(1)
         
         # Apply colors to the board
         for i in range(self.board.size):
             for j in range(self.board.size):
                 if self.board.board[i, j] > 0:
-                    self.board.color_board[i, j] = colors[self.board.board[i, j]]
+                    tromino_id = int(self.board.board[i, j])
+                    self.board.color_board[i, j] = colors.get(tromino_id, 1)
 
 
 # 2. Graph Coloring with Constraint Propagation
@@ -328,29 +392,42 @@ class SATSolverAlgorithm:
 
 
 # Run all algorithms and display results
-def run_all_algorithms(n=3, missing_x=0, missing_y=0):
-    """Run all algorithms and display their results in a single subplot view."""
+
+
+def run_all_algorithms(n, missing_x=None, missing_y=None):
     algorithms = [
-        ("Divide and Conquer", DivideAndConquerAlgorithm(n, missing_x, missing_y)),
-        ("Graph Coloring + CSP", GraphColoringAlgorithm(n, missing_x, missing_y)),
-        ("SAT Solver Approach", SATSolverAlgorithm(n, missing_x, missing_y))
+        ("Divide and Conquer", DivideAndConquerAlgorithm),
+        ("Graph Coloring", GraphColoringAlgorithm),
+        ("SAT Solver Approach", SATSolverAlgorithm)
     ]
-    
-    results = []
-    for name, algorithm in algorithms:
-        print(f"Running {name}...")
-        start_time = time.time()
-        board = algorithm.run()
-        end_time = time.time()
-        results.append((name, board, end_time - start_time))
-    
-    # Plot results side by side
-    fig, axs = plt.subplots(1, len(results), figsize=(6 * len(results), 6))
-    if len(results) == 1:
+    fig, axs = plt.subplots(1, len(algorithms), figsize=(6 * len(algorithms), 6))
+    if len(algorithms) == 1:
         axs = [axs]
     
-    for ax, (name, board, exec_time) in zip(axs, results):
-        board.visualize(f"{name}\nTime: {exec_time:.4f}s", ax=ax)
+    # Store execution times
+    execution_times = []
+    
+    for idx, (name, AlgoClass) in enumerate(algorithms):
+        # Initialize algorithm
+        algo = AlgoClass(n, missing_x, missing_y)
+        
+        # Measure execution time
+        start_time = time.time()
+        board = algo.run()
+        end_time = time.time()
+        
+        # Calculate execution time
+        exec_time = end_time - start_time
+        execution_times.append(exec_time)
+        
+        # Visualize the board
+        title = f"{name}\nExecution Time: {exec_time:.4f} seconds"
+        board.visualize(title=title, ax=axs[idx])
+    
+    # Print execution times for comparison
+    print("\nExecution Times:")
+    for (name, _), exec_time in zip(algorithms, execution_times):
+        print(f"{name}: {exec_time:.4f} seconds")
     
     plt.tight_layout()
     plt.show()
@@ -359,4 +436,4 @@ def run_all_algorithms(n=3, missing_x=0, missing_y=0):
 # Run the demonstration with a 4x4 board (n=2)
 if __name__ == "__main__":
     # You can adjust these parameters as needed
-    run_all_algorithms(n=4, missing_x=0, missing_y=0)  # Creates a 2^3 = 8x8 board
+    run_all_algorithms(n=3, missing_x=2, missing_y=3)  # Creates a 2^3 = 8x8 board
