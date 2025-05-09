@@ -4,7 +4,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <bitset>
-#include <cstring> // For memset
+#include <cstring> 
 
 using namespace std;
 
@@ -37,7 +37,7 @@ int solve() {
     queue<State> q;
     memset(dp, -1, sizeof(dp)); // Mark all states unvisited
 
-    // Start from (0, 0) in all 4 directions
+    
     for (int d = 0; d < 4; ++d) {
         int mask = 1 << pointToBit(0, 0); // Only (0,0) visited
         dp[0][0][d][mask] = 1; // 1 line started
