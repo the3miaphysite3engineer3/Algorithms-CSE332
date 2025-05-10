@@ -1,16 +1,12 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include <algorithm>
 using namespace std;
 
-// Total number of hiding spots
-const int n = 10;
+const int n = 10;  // Total number of hiding spots (n > 2)
+int targetPos;     // Target's current position
 
-// Target's current position
-int targetPos;
-
-// Move the target to an adjacent position (i ± 1)
+// Move the target to an adjacent position (±1)
 void moveTarget() {
     int direction = rand() % 2 == 0 ? -1 : 1;
     int nextPos = targetPos + direction;
@@ -33,29 +29,26 @@ bool fireAt(int pos) {
 
 int main() {
     srand(time(0));
-    targetPos = rand() % n + 1; // Random initial target position
-
-    int time = 0;
-    bool hit = false;
+    targetPos = rand() % n + 1;  // Random initial target position
 
     cout << "Starting simulation with target hiding in positions 1 to " << n << "." << endl;
+    cout << "Target starts at position: " << targetPos << endl;
 
-    while (!hit) {
-        // Sweep left to right
-        for (int i = 1; i <= n && !hit; ++i) {
-            hit = fireAt(i);
-            if (hit) break;
-            moveTarget();
-            ++time;
-        }
+    bool hit = false;
+    int time = 0;
 
-        // Sweep right to left
-        for (int i = n; i >= 1 && !hit; --i) {
-            hit = fireAt(i);
-            if (hit) break;
-            moveTarget();
-            ++time;
-        }
+    // First sweep: fire at 2 to n-1
+    for (int i = 2; i <= n - 1 && !hit; ++i) {
+        hit = fireAt(i);
+        ++time;
+        if (!hit) moveTarget();
+    }
+
+    // Second sweep: fire at n-1 back to 2
+    for (int i = n - 1; i >= 2 && !hit; --i) {
+        hit = fireAt(i);
+        ++time;
+        if (!hit) moveTarget();
     }
 
     cout << "Target was hit after " << time << " time steps." << endl;
