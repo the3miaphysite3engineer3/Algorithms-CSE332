@@ -51,16 +51,8 @@ Alternative strategy that:
 
 ## Requirements
 - C++17 compatible compiler (g++/clang++)
-- CMake 3.10+ (optional)
-
-## Installation
 
 ### Basic Compilation
 ```bash
 g++ -o bin_packer main.cpp -std=c++17
-- CMake 3.10+ (optional)
 
-## Installation
-### Basic Compilation
-```bash
-g++ -o bin_packer main.cpp -std=c++17
